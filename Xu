@@ -1,0 +1,792 @@
+### download dataset ONLY train data!!!!####################################
+##################### file = train.csv #####################################
+#####  rm(list = ls())  ####
+data <- read.csv(file.choose(), stringsAsFactors = FALSE, header= TRUE )
+
+### look the dimension and structure of the dataset
+dim(data)
+
+str(data)
+
+#############################################################################
+####################### outlier dectetion ###################################
+plot(data$GrLivArea, data$SalePrice, main = "With Outliers")
+
+## remove the outliers
+data <- data[-which(train$GrLivArea > 4000 & train$SalePrice < 3e+05),]
+#### data <- data
+### 如何可以安全的删除？还有为什么只有一个变量有异常值？
+
+### checking again
+plot(data$GrLivArea, data$SalePrice, main = "With Outliers")
+#############################################################################
+
+
+
+##############################################################################
+##################### transfirmation #########################################
+#### first we explore the distrbution of the SalePrice 
+#### test the normality of the SalePrice
+hist(data$SalePrice, breaks = 50, main = "Right skewed distribution")
+qqnorm(data$SalePrice,col='blue', main = 'Non-transformation Q-Q Plot')
+qqline(data$SalePrice,col='red')
+
+###try to use log(x+1) trsformation 
+data$SalePrice <- log(data$SalePrice + 1)
+## data <- data
+hist(data$SalePrice, breaks = 50, main = "After transformation")
+qqnorm(data$SalePrice,col='blue', main = 'After transformation Q-Q Plot')
+qqline(data$SalePrice,col='red')
+###可以先不画出残差图直接进行transformation吗？
+###根据正态性假设？
+###############################################################################
+
+
+
+
+#########################################################################################################
+##########################################################################################################
+################################  missing data analysis ##################################################
+
+################# visualize missing data ###################
+Missing_Ratio <- sort(colSums(is.na(data))/nrow(data),decreasing = TRUE)
+
+Missing_Ratio <- Missing_Ratio[Missing_Ratio!=0]
+print(Missing_Ratio)
+
+############ visailize the ratio#########################################################################################################
+barCenters <- barplot(Missing_Ratio,col = rainbow(length(Missing_Ratio)),main='Missing Rate',axes = FALSE,axisnames=FALSE,border ="white")			
+text(x = barCenters, y = par("usr")[3]-.2, srt = 60, adj = 1, labels = names(Missing_Ratio), xpd = TRUE)
+
+barCenters <- barplot(Missing_Ratio,col = "lightblue",axes = FALSE,horiz=TRUE,border ="white")				
+text(y = barCenters, x = par("usr")[3],adj = 1, labels = names(Missing_Ratio), xpd = TRUE)
+axis(1, labels = seq(0,9,by=1), at = seq(0,9,by=1),  las = 1 , col = "gray") 
+#########################################################################################################################################
+
+##################### Imputing missing data ################
+
+######1.categorical data
+
+data$PoolQC[is.na(data$PoolQC)] <- 'None'
+data$MiscFeature[is.na(data$MiscFeature)] <-'None'
+data$Alley[is.na(data$Alley)] <-'None'
+data$Fence[is.na(data$Fence)] <-'None'
+data$FireplaceQu[is.na(data$FireplaceQu)] <-'None'
+data$GarageType[is.na(data$GarageType)] <-'None'
+data$GarageFinish[is.na(data$GarageFinish)] <-'None'
+data$GarageQual[is.na(data$GarageQual)] <-'None'
+
+data$GarageCond[is.na(data$GarageCond)] <-'None'
+
+######2.numercial data
+data$GarageYrBlt[is.na(data$GarageYrBlt)] <- 0
+data$GarageArea[is.na(data$GarageFinishGarageArea)] <- 0
+data$GarageCars [is.na(data$GarageCars )] <- 0
+
+data$BsmtFinSF2[is.na(data$BsmtFinSF2)] <- 0
+data$BsmtFinSF1[is.na(data$BsmtFinSF1)] <- 0
+data$BsmtUnfSF[is.na(data$BsmtUnfSF)] <- 0
+data$TotalBsmtSF[is.na(data$TotalBsmtSF)] <- 0
+data$BsmtFullBath[is.na(data$BsmtFullBath)] <- 0
+data$BsmtHalfBath[is.na(data$BsmtHalfBath)] <- 0
+##########################################
+
+#########categorical data
+data$BsmtQual[is.na(data$BsmtQual)] <-'None'
+data$BsmtCond[is.na(data$BsmtCond)] <-'None'
+data$BsmtExposure[is.na(data$BsmtExposure)] <-'None'
+data$BsmtFinType1[is.na(data$BsmtFinType1)] <-'None'
+data$BsmtFinType2[is.na(data$BsmtFinType2)] <-'None'
+
+data$MasVnrArea[is.na(data$MasVnrArea)] <-'None'
+data$MasVnrType[is.na(data$MasVnrType)] <-'None'
+
+data$MSZoning[is.na(data$MSZoning)] <-'RL'###########################
+
+####drop utilities
+
+data$Functional[is.na(data$Functional)] <-'Typ'
+
+data$Electrical[is.na(data$Electrical)] <-'Sbrkr'
+
+data$KitchenQual[is.na(data$KitchenQual)] <-'TA'
+
+### max(table(data$Exterior2nd))
+data$Exterior1st[is.na(data$Exterior1st)] <- 'VinylSd'
+data$Exterior2nd[is.na(data$Exterior2nd)] <-' VinylSd'
+
+
+data$SaleType[is.na(data$SaleType)] <-'WD'
+data$MSSubClass[is.na(data$MSSubClass)] <-'None'
+##########################################################
+
+
+######2.numercial data
+##LotFrontage, usind median
+#sum(is.na(data$LotFrontage))
+#!is.na(data$LotFrontage)
+
+data$MasVnrArea[data$MasVnrArea==NA] <- median(as.numeric(data$MasVnrArea!=NA))####加进前面的部分######################################3
+data$MasVnrArea[data$MasVnrArea=='None'] <- median(as.numeric(data$MasVnrArea!='None'))
+
+#sum(is.na(data$LotFrontage))
+
+
+
+data$LotFrontage <- as.numeric(data$LotFrontage)
+data$LotFrontage[is.na(data$LotFrontage)] <- median(data$LotFrontage[!is.na(data$LotFrontage)])
+
+####double check the missing rata
+
+Missing_Ratio <- sort(colSums(is.na(data))/nrow(data),decreasing = TRUE)
+
+Missing_Ratio <- Missing_Ratio[Missing_Ratio!=0]
+print(Missing_Ratio)
+
+###最后导出干净的数据！！！
+####1201,19:59 update
+
+write.table(data, file ="C:\\Users\\user\\Desktop\\Regression Analysis (1002) (Dr. Hua-Jun YE)\\Group_Project\\train_clean.csv", sep =",", row.names =FALSE)
+#############################################################################################################
+#############################################################################################################
+#############################################################################################################
+
+
+#################################### simply explore muticollinearity ?? #####################################
+
+library(corrplot)
+data$MasVnrArea <- as.numeric(data$MasVnrArea)####加进前面的部分######################################3
+data$LotFrontage <- as.numeric(data$LotFrontage)
+
+correlations <- cor(data[,c(4,5,27,35,37,38,39,c(44:53),55,57,62,63,c(67:72),76)], use="everything")
+corrplot(correlations, method="circle", type="lower",  sig.level = 0.01, insig = "blank")
+##########################################################################################################
+corrplot(correlations, method = "color", outline = T, cl.pos = 'n', rect.col = "black",  tl.col = "indianred4", addCoef.col = "black", number.digits = 2, number.cex = 0.60, tl.cex = 0.7, cl.cex = 1, col = colorRampPalette(c("green4","white","red"))(100))
+
+##########################3 add important feature， drop useless feature ##################################
+
+
+
+
+#################  TAKE CARE !!!!! ###########################
+data <- data[,-1]  ### delect the id column 
+###############################################################
+
+########### using transformation data
+data$MasVnrArea <- as.numeric(data$MasVnrArea)####加进前面的部分######################################3
+data$LotFrontage <- as.numeric(data$LotFrontage)
+
+lm <- lm(data$SalePrice~.,data=data)
+summary(lm)
+
+##############  (9 not defined because of singularities)
+############## 我觉得出现 na 有可能是你的自变量太多, 出现了共线性问题.
+##### 为什么不预测每平方米的价格？？？？？
+###### overfitting????
+
+#####################################################################################################
+#####################################################################################################
+######################## prices without transformation file = train_clean_+without transformation ###
+######################## the importance of transformation ###########################################
+#####################################################################################################
+data_without_transformation <- read.csv(file.choose(),head=T)
+
+price_without_transformation <- data_without_transformation[,82]
+
+data_without_transformation <- data_without_transformation[,-c(1,81,82)]
+data_without_transformation$MasVnrArea <- as.numeric(data_without_transformation$MasVnrArea)
+lm_without <- lm(price_without_transformation~., data=data_without_transformation)
+summary(lm_without)
+
+#####################################################################################################
+#####################################################################################################
+
+########model diagnosis
+
+plot(fitted(lm_without),summary(lm_without)$residuals,main='The Residual Plot',xlab='Predicted Value',ylab='Ordinary Prices Residuals')
+qqnorm(summary(lm_without)$residuals,col='blue')
+qqline(summary(lm_without)$residuals,col='red')
+
+
+
+
+library(car)
+vif(lm)
+
+durbinWatsonTest(lm)
+ncvTest(lm)
+
+########################################################################################################
+########################################################################################################
+
+library(MASS)
+
+data_clean <- read.csv(file.choose(),header=T)###train_clean
+SalePrice <- data_clean[,81]
+data_clean <- data_clean[,-1]  ### delect the id column 
+data_clean <- data_clean[,-80]  ### delect the saleprice
+
+ridgelm <- lm.ridge(SalePrice~.,data=data_clean)
+summary(ridgelm)
+print(ridgelm)
+plot(lm.ridge(SalePrice~.,data=data_clean,lambda = seq(0,0.0001,0.0001)))
+select(lm.ridge(SalePrice~.,data=data_clean,lambda = seq(0,0.0001,0.0001)))
+###########################################################################################################
+###########################################################################################################
+
+library(ridge)
+
+mod <- linearRidge(SalePrice~.,data=data_clean)
+summary(mod)
+
+
+#stepAIC(lm, direction = “forward”)
+step(lm,direction = c("forward"))
+
+
+#################################################################################
+############### first we only consider numercial data in our data set
+###################
+
+data_L <- read.csv(file.choose(),header=T)## train_clean_FINAL
+
+##c(4,5,27,35,37,38,39,c(44:53),55,57,62,63,c(67:72),76)
+
+#data_numericial <- as.matrix(data_L[,c(4,5,27,35,37,38,39,c(44:53),55,57,62,63,c(67:72),76)])
+
+data_numericial <- apply(as.matrix(unlist(data_L[,c(4,5,27,35,37,38,39,c(44:53),55,57,62,63,c(67:72),76)])), 2, as.numeric)
+
+data_numericial_A <- matrix(data_numericial,ncol=28)
+
+y <- as.matrix(data_L[,81])
+
+######beta <- solve(t(X)%*%X) %*% t(X) %*% y 
+
+name <-c('LotFrontage','LotArea','MasVnrArea','BsmtFinSF1','BsmtFinSF2','BsmtUnfSF','TotalBsmtSF','X1stFlrSF','X2ndFlrSF','LowQualFinSF','GrLivArea','BsmtFullBath','BsmtHalfBath','FullBath','HalfBath','BedroomAbvGr','KitchenAbvGr','TotRmsAbvGrd','Fireplaces','GarageCars','GarageArea','WoodDeckSF','OpenPorchSF','EnclosedPorch','X3SsnPorch','ScreenPorch','PoolArea','MiscVal')
+
+
+data_frame_lm <- data.frame(data_numericial_A)
+
+colnames(data_numericial_A) <- name
+
+colnames(data_frame_lm) <- name###################!!!!!
+#################################!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+##data matrix
+X <- cbind(1,data_numericial_A)
+#data_numericial_A_std <-scale(data_numericial_A)
+
+###
+### using conditional number to chech the muticolinearity 
+kappa(t(X)%*%X)#[1] 2.026486e+19
+
+solve(t(X)%*%X)
+
+lm <- lm(y~.,data=data_frame_lm)
+summary(lm)
+
+##vif
+library(car)
+vif(lm)### CANNOT BE CALCULATED!!!!!
+
+##in the previous lm model, we find NA in it , NA in lm will be instable in our future analysis
+##so we need to drop some high correlation variablb 
+## using our corr matrix to drop out directly
+##dropVars <- c('YearRemodAdd', 'GarageYrBlt', 'GarageArea', 'GarageCond', 'TotalBsmtSF', 'TotalRmsAbvGrd', 'BsmtFinSF1')
+
+library(carData)
+library(car)
+library(MASS)
+
+######################## Model 1 ##################
+data_drop <- data_numericial_A[,c(-4,-7,-11,-18,-21)]
+lm_drop <- lm(y~.,data=as.data.frame(data_drop))
+summary(lm_drop)
+
+##########################
+X_1 <- cbind(1,data_drop)
+kappa(t(X_1)%*%X_1)#9757115663
+
+##vif_drop using coor
+vif(lm_drop)
+
+###PRESS drop
+press_drop <- sum((residuals(lm_drop)/(1 - lm.influence(lm_drop)$hat))^2)
+press_drop #47.37008
+
+residuals_drop <- resid(lm_drop)
+#studentized_residuals <- summary(lm_drop)$residuals/(summary(lm_drop)$sigma*sqrt(1-lm.influence(lm_drop)$hat))
+plot(fitted(lm_drop),residuals_drop,main='Residual Plot')
+abline(h=0,col='red')
+
+###Test the norimality assumption 
+qqnorm(residuals_drop,col='blue')
+qqline(residuals_drop,col='red')
+
+ks.test(jitter(residuals_drop),pnorm,mean(x),sd(x))##??,mean(x),sd(x)??
+####### the function of jitter() is to avoid the same data
+
+shapiro.test(residuals_drop)
+
+##independent test
+durbinWatsonTest(lm_drop) # p = 0.886
+
+##same distribution
+ncvTest(lm_drop) # p = 5.6489e-08?  2.892e-07
+
+##linearity 
+crPlots(lm_drop)
+
+##Regression Influence Plot
+#influence.plot(lm_drop)
+influencePlot(lm_drop,main="InfluencePlot",sub="circle size is proportional to cook's distance")
+#influence.measures(lm_drop)##??
+
+cutoff <- 4/(length(y)-length(lm_drop$coefficients)-2)
+plot(lm_drop,which=4,cook.levels=cutoff)
+abline(h=cutoff,lty=2,col="red")
+
+
+### high leverage point
+hat.plot<-function(fit){
+p<-length(coefficients(fit))
+n<-length(fitted(fit))
+plot(hatvalues(fit),main="Index Plot of Hat Values")
+abline(h=c(2,3)*p/n,col="red",lty=2)
+identify(1:n,hatvalues(fit),names(hatvalues(fit)))
+}
+hat.plot(lm_drop)
+
+###hii
+p <- length(coefficients(lm_drop))
+n <- length(fitted(lm_drop))
+drop_delect_hii <- which(hatvalues(lm_drop)>=3*p/n) 
+###ti 
+drop_delect_ti <- which(abs(rstudent(lm_drop))>2)
+###delect #[1]   49  496  635  854 1031 1385
+drop_delect <- intersect(drop_delect_hii,drop_delect_ti)
+
+
+##
+#####delect data_drop[c(49,496,635,854,1031,1385),]
+drop_delect <- c(49,496,635,854,1031,1385)
+data_after_drop_delect <- data_drop[-drop_delect,]
+lm_after_drop_delect <- lm(y[-drop_delect,]~.,data=as.data.frame(data_after_drop_delect))
+summary(lm_after_drop_delect)
+
+residuals_drop_delect <- resid(lm_after_drop_delect)
+plot(fitted(lm_after_drop_delect),residuals_drop_delect,main='Residual Plot')
+abline(h=0,col='red')
+
+#qqnorm(residuals_drop_delect)
+#qqline(residuals_drop_delect)
+ncvTest(lm_after_drop_delect)
+
+
+####if we use outlierTest(lm_drop)####################################### ???? 
+#####delect data_drop[c(31,496,916,968,812,632),]
+drop_delect_out <- c(31,496,916,968,812,632)
+data_after_drop_delect_out <- data_drop[-drop_delect_out,]
+lm_after_drop_delect_out <- lm(y[-drop_delect_out,]~.,data=as.data.frame(data_after_drop_delect_out))
+summary(lm_after_drop_delect_out)
+
+residuals_drop_delect_out <- resid(lm_after_drop_delect_out)
+plot(fitted(lm_after_drop_delect_out),residuals_drop_delect_out,main='Residual Plot')
+abline(h=0,col='red')
+
+#qqnorm(residuals_drop_delect_out)
+#qqline(residuals_drop_delect_out)
+ncvTest(lm_after_drop_delect_out)
+
+outlierTest(lm_after_drop_delect_out)
+######################################################################
+
+
+######## box cox transformation for model 1
+library(carData)
+library(car)
+
+powerTransform(lm_drop)$lambda
+#boxcox(lm_drop)$lambda
+
+boxcox(lm_drop, lambda=seq(1, 5, by=0.1))
+
+y_drop_box_cox <- (y^powerTransform(lm_drop)$lambda-1)/powerTransform(lm_drop)$lambda
+
+lm_drop_box_cox <- lm(y_drop_box_cox~.,data=as.data.frame(data_drop))
+summary(lm_drop_box_cox)
+
+residuals_drop_box_cox <- resid(lm_drop_box_cox)
+plot(fitted(lm_drop_box_cox),residuals_drop_box_cox,main='Residual Plot')
+abline(h=0,col='red')
+
+#studentized_residuals_box_cox <- summary(lm_drop_box_cox)$residuals/(summary(lm_drop_box_cox)$sigma*sqrt(1-lm.influence(lm_drop_box_cox)$hat))
+#plot(fitted(lm_drop_box_cox),studentized_residuals_box_cox,main='Studentized Residual Plot')
+#abline(h=0,col='red')
+
+#Test the norimality assumption 
+qqnorm(residuals_drop_box_cox,col='blue')
+qqline(residuals_drop_box_cox,col='red')
+
+ks.test(jitter(residuals_drop_box_cox),pnorm,mean(residuals_drop_box_cox),sd(residuals_drop_box_cox))
+shapiro.test(residuals_drop_box_cox)
+
+######## box tiwell transformation for model 1
+
+##boxTidwell(y~.,data=as.data.frame(data_drop+runif(1,0,1)))
+##box.tidwell(yy~.,data=as.data.frame(data_drop))
+
+###########################################################
+#########     weighted least square WLS for model 1 
+###########################################################
+
+residuals_drop <- resid(lm_drop)
+lm_drop_wls <- lm(y~.,weights=1/abs(residuals_drop),data=as.data.frame(data_drop))
+summary(lm_drop_wls)#R2 0.9851
+
+###PRESS drop wls
+press_drop_wls <- sum((residuals(lm_drop_wls)/(1 - lm.influence(lm_drop_wls)$hat))^2)
+press_drop_wls #45.60279
+
+residuals_drop_wls <- resid(lm_drop_wls)
+qqnorm(residuals_drop_wls ,col='blue')
+qqline(residuals_drop_wls ,col='red')
+ks.test(jitter(residuals_drop_wls),pnorm,mean(residuals_drop_wls),sd(residuals_drop_wls))
+
+ncvTest(lm_drop_wls)# p = 0.11962
+
+residuals_drop_wls <- resid(lm_drop_wls)
+plot(fitted(lm_drop_wls),residuals_drop_wls,main='Residual Plot')
+abline(h=0,col='red')
+
+
+
+####################### Model 2 ######################
+################### using Lasso, we delect 6,8,9,27,28 
+data_after_lasso <- data_numericial_A[,c(-6,-8,-9,-27,-28)]
+lm_after_lasso <- lm(y~.,data=as.data.frame(data_after_lasso))
+summary(lm_after_lasso)
+
+##########################
+X_2 <- cbind(1,data_after_lasso)
+kappa(t(X_2)%*%X_2)#7946982753
+
+
+##vif using lasso
+vif(lm_after_lasso)
+
+###PRESS LASSO
+press_lasso <- sum((residuals(lm_after_lasso)/(1 - lm.influence(lm_after_lasso)$hat))^2)
+press_lasso #42.13393
+
+residuals_lasso <- resid(lm_after_lasso)
+plot(fitted(lm_after_lasso),residuals_lasso,main='Residual Plot')
+abline(h=0,col='red')
+
+###Test the norimality assumption 
+qqnorm(residuals_lasso,col='blue')
+qqline(residuals_lasso,col='red')
+#plot(rstudent(press_lasso))
+
+ks.test(jitter(residuals_lasso),pnorm,mean(x),sd(x))##??,mean(x),sd(x)??
+####### the function of jitter() is to avoid the same data
+
+shapiro.test(residuals_lasso)
+
+
+##independent test
+durbinWatsonTest(lm_after_lasso) # p = 0.66
+
+##same distribution
+ncvTest(lm_after_lasso) # p = 7.5014e-09
+
+##linearity 
+crPlots(lm_after_lasso)
+
+#step(lm_after_lasso)
+
+##Regression Influence Plot
+#influence.plot(lm_after_lasso)
+influencePlot(lm_after_lasso,main="InfluencePlot",sub="circle size is proportional to cook's distance")
+#influence.measures(lm_drop)
+
+cutoff <- 4/(length(y)-length(lm_after_lasso$coefficients)-2)
+plot(lm_after_lasso,which=4,cook.levels=cutoff)
+abline(h=cutoff,lty=2,col="red")
+
+
+### high leverage point
+hat.plot<-function(fit){
+p<-length(coefficients(fit))
+n<-length(fitted(fit))
+plot(hatvalues(fit),main="Index Plot of Hat Values")
+abline(h=c(2,3)*p/n,col="red",lty=2)
+identify(1:n,hatvalues(fit),names(hatvalues(fit)))
+}
+hat.plot(lm_after_lasso)
+
+###hii
+p <- length(coefficients(lm_after_lasso))
+n <- length(fitted(lm_after_lasso))
+lasso_delect_hii <- which(hatvalues(lm_after_lasso)>=3*p/n) 
+###ti 
+lasso_delect_ti <- which(abs(rstudent(lm_after_lasso))>2)
+###delect #[1]   49  496  635 1385
+lasso_delect <- intersect(lasso_delect_hii,lasso_delect_ti)
+
+
+#####delect data_after_lasso[c(49,496,635,1385),]
+lasso_delect <- c(49,496,635,1385)
+data_after_lasso_delect <- data_after_lasso[-lasso_delect,]
+lm_after_lasso_delect <- lm(y[-lasso_delect,]~.,data=as.data.frame(data_after_lasso_delect))
+summary(lm_after_lasso_delect)
+
+residuals_lasso_delect <- resid(lm_after_lasso_delect)
+plot(fitted(lm_after_lasso_delect),residuals_lasso_delect,main='Residual Plot')
+abline(h=0,col='red')
+
+#qqnorm(residuals_lasso_delect)
+#qqline(residuals_lasso_delect)
+ncvTest(lm_after_lasso_delect)
+
+
+
+######## box cox transformation for model 2
+library(carData)
+library(car)
+
+powerTransform(lm_after_lasso)$lambda
+#boxcox(lm_after_lasso)$lambda
+
+boxcox(lm_after_lasso, lambda=seq(1, 5, by=0.1))
+
+y_lasso_box_cox <- (y^powerTransform(lm_after_lasso)$lambda-1)/powerTransform(lm_after_lasso)$lambda
+
+lm_lasso_box_cox <- lm(y_lasso_box_cox~.,data=as.data.frame(data_after_lasso))
+summary(lm_lasso_box_cox)
+
+residuals_lasso_box_cox <- resid(lm_lasso_box_cox)
+plot(fitted(lm_lasso_box_cox),residuals_lasso_box_cox,main='Residual Plot')
+abline(h=0,col='red')
+
+#Test the norimality assumption 
+qqnorm(residuals_lasso_box_cox,col='blue')
+qqline(residuals_lasso_box_cox,col='red')
+#hist(residuals_lasso_box_cox,breaks=100)
+
+ks.test(jitter(residuals_lasso_box_cox),pnorm,mean(x),sd(x))
+
+press_lasso <- sum((residuals(lm_lasso_box_cox)/(1 - lm.influence(lm_lasso_box_cox)$hat))^2)
+press_lasso #103567021
+
+
+###########################################################
+#########     weighted least square WLS for model 2
+###########################################################
+
+residuals_lasso <- resid(lm_after_lasso)
+lm_after_lasso_wls <- lm(y~.,weights=1/abs(residuals_lasso),data=as.data.frame(data_drop))
+summary(lm_after_lasso_wls)
+
+###PRESS after lasso wls
+press_after_lasso_wls <- sum((residuals(lm_after_lasso_wls)/(1 - lm.influence(lm_after_lasso_wls)$hat))^2)
+press_after_lasso_wls #46.59305
+
+qqnorm(residuals_lasso,col='blue')
+qqline(residuals_lasso,col='red')
+ks.test(jitter(residuals_lasso),pnorm,mean(residuals_lasso),sd(residuals_lasso))
+
+ncvTest(lm_after_lasso_wls)
+
+residuals_after_lasso_wls <- resid(lm_after_lasso_wls)
+plot(fitted(lm_after_lasso_wls),residuals_after_lasso_wls,main='Residual Plot')
+abline(h=0,col='red')
+
+
+
+############
+library(MASS)
+stepAIC(lm_after_lasso,direction="backward")
+
+######################################################################################################################
+######################################################################################################################
+##################################### test data ############ prediction 
+test <- read.csv(file.choose(),header=T)
+#test1 <- test[,-1]
+test2 <- as.data.frame(as.matrix(test[,c(4,5,27,35,37,38,39,c(44:53),55,57,62,63,c(67:72),76)]))
+
+test2$LotFrontage[is.na(test2$LotFrontage)] <- median(test2$LotFrontage[!is.na(test2$LotFrontage)])
+test2$LotFrontage[is.na(test2$MasVnrArea)] <- median(test2$LotFrontage[!is.na(test2$LotFrontage)])
+test2$GarageYrBlt[is.na(test2$GarageYrBlt)] <- 0
+test2$GarageArea[is.na(test2$GarageFinishGarageArea)] <- 0
+test2$GarageCars [is.na(test2$GarageCars )] <- 0
+
+test2$BsmtFinSF2[is.na(test2$BsmtFinSF2)] <- 0
+test2$BsmtFinSF1[is.na(test2$BsmtFinSF1)] <- 0
+test2$BsmtUnfSF[is.na(test2$BsmtUnfSF)] <- 0
+test2$TotalBsmtSF[is.na(test2$TotalBsmtSF)] <- 0
+test2$BsmtFullBath[is.na(test2$BsmtFullBath)] <- 0
+test2$BsmtHalfBath[is.na(test2$BsmtHalfBath)] <- 0
+test2$GarageArea[is.na(test2$GarageArea)] <- 0
+test2$MasVnrArea[is.na(test2$MasVnrArea)] <- 0
+
+
+LassoPred <- predict(lm_after_lasso_1se, test2)
+predictions_lasso <- exp(LassoPred)-1 #need to reverse the log to the real values
+head(predictions_lasso)
+write.table(predictions_lasso, file ="C:\\Users\\user\\Desktop\\Regression Analysis (1002) (Dr. Hua-Jun YE)\\Group_Project\\predict2.csv", sep =",", row.names =FALSE)
+
+##########################################
+#test2$MasVnrArea[test2$MasVnrArea=='None'] <- median(as.numeric(test2$MasVnrArea!='None'))
+######################################################################################################################
+######################################################################################################################
+
+
+################ Model 3 Ridge regression ########################
+
+###########################################
+
+anova(lm_after_lasso,lm_drop)###???????
+
+
+#############################################################################################
+
+
+###Influence case  (DFFITS, DFBETA, Cook distance) 
+influence.measures(lm)
+
+##########################################################################################
+
+library(Matrix)
+library(foreach)
+library(glmnet)
+
+#####################################################standerlized the data, -mu /sd
+
+##### how to use LASSO to reduce parameter
+#####  LASSO additional meterial
+
+#write.table(data_numericial, file ="C:\\Users\\user\\Desktop\\Regression Analysis (1002) (Dr. Hua-Jun YE)\\Group_Project\\112.csv", sep =",", row.names =FALSE)
+
+data_numericial_A_std <- scale(data_numericial_A)
+cv.fit <- cv.glmnet(data_numericial_A_std, y, family="gaussian", nlambda=50, alpha=1,standardize=TRUE)#standardize=TRUE?
+
+names(cv.fit)
+
+print(cv.fit)
+
+cv.fit$lambda.min # [1] 0.002637834
+
+coefficients_1se <- coef(cv.fit,s=cv.fit$lambda.1se)##put the part into discussion
+coefficients_1se
+
+coefficients_min <- coef(cv.fit,s=cv.fit$lambda.min)
+coefficients_min
+
+active_index<-which(coefficients!=0)   
+active.coefficients<-coefficients[Active.Index]
+active_index
+
+plot(cv.fit)
+
+
+#####??? the different between cv.glmnet and glmnet
+fit <- glmnet(data_numericial_A_std, y, family="gaussian", nlambda=50, alpha=1,standardize=TRUE)
+plot(fit,xvar="lambda", label=TRUE)
+print(fit)
+coefficients<-coef(fit,s=fit$lambda.min)
+
+coefficients
+##plot(fit)??
+
+####ridge? ##alpha = 0
+fit_ridge <- glmnet(data_numericial_A_std, y, family="gaussian", nlambda=50, alpha=0,standardize=TRUE)
+plot(fit_ridge,xvar="lambda", label=TRUE)
+
+############## Discussion,1 ###############################################-- add new method??
+####################### Lasso using lambda.1se ######################
+################### using Lasso, we delect -2,-5,-6,-8,-9,-13,-18,-25,-26,-27,-28 
+
+library(carData)
+library(car)
+
+data_after_lasso_1se <- data_numericial_A[,c(-2,-5,-6,-8,-9,-13,-18,-25,-26,-27,-28)]
+lm_after_lasso_1se <- lm(y~.,data=as.data.frame(data_after_lasso_1se))
+summary(lm_after_lasso_1se)
+
+
+##########################
+X_1se <- cbind(1,data_after_lasso_1se)
+kappa(t(X_1se)%*%X_1se)#73168856
+
+
+##vif using lasso_1se
+vif(lm_after_lasso_1se)
+
+###PRESS LASSO
+press_lasso_1se <- sum((residuals(lm_after_lasso_1se)/(1 - lm.influence(lm_after_lasso_1se)$hat))^2)
+press_lasso_1se
+
+residuals_lasso_1se <- resid(lm_after_lasso_1se)
+plot(fitted(lm_after_lasso_1se),residuals_lasso_1se,main='Residues Plot')
+abline(h=0,col='red')
+
+###Test the norimality assumption 
+qqnorm(residuals_lasso_1se,col='blue')
+qqline(residuals_lasso_1se,col='red')
+#plot(rstudent(press_lasso_1se))
+
+ks.test(jitter(residuals_lasso_1se),pnorm,mean(x),sd(x))##??,mean(x),sd(x)??
+####### the function of jitter() is to avoid the same data
+
+shapiro.test(residuals_lasso_1se)
+
+
+##independent test
+durbinWatsonTest(lm_after_lasso_1se) # p = 0.66
+
+##same distribution
+ncvTest(lm_after_lasso_1se) # p = 7.5014e-09
+
+##linearity 
+crPlots(lm_after_lasso_1se)
+
+############# Discussion,2##############################
+
+library(e1071)
+Kurtosis <- NULL
+Skewness <- NULL
+for (i in c(1:dim(data_numericial_A)[2])){
+Kurtosis <- c(Kurtosis,kurtosis(data_numericial_A[,i]))
+Skewness <- c(Skewness,skewness(data_numericial_A[,i]))
+}
+
+
+Skewness_dataframe <- data.frame(Skewness,Variable=name)
+Skewness_dataframe
+
+Kurtosis_dataframe <- data.frame(Kurtosis,Variable=name)
+Kurtosis_dataframe
+
+hist(data_numericial_A[,2],breaks=50,main='LotArea')
+
+#hist(data_numericial_A[,25],breaks=50,main='X3SsnPorch')
+
+#Skewness_sort <- sort(Skewness,decreasing = TRUE)
+#Skewness_sort
+
+############# Discussion,5##############################
+
+##train_clean_+without transformation
+library(MASS)
+boxplot(CL~sex,data=crabs,col='pink',xlab='sex',ylab='CL',main='crabs')
+
+data_5 <- read.csv(file.choose(),header=T)
+
+boxplot(data_5[,81]~data_5$Neighborhood,col='pink',xlab='Neighborhood',ylab='SalePrice_transformation',main='Important categorical variable')
+
+boxplot(data_5[,81]~data_5$MSSubClass,col='pink',xlab='MSSubClass',ylab='SalePrice_transformation',main='Important categorical variable')
+
+boxplot(data_5[,81]~data_5$OverallQual,col='pink',xlab='OverallQual',ylab='SalePrice_transformation',main='Important categorical variable')
+
+
